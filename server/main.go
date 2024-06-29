@@ -49,20 +49,37 @@ func main() {
 		DB: internal.New(conn),
 	}
 
-	fs := http.FileServer(http.Dir("./static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	fs := http.FileServer(http.Dir("./assets"))
 
 	router := chi.NewRouter()
 
 	v1Router := chi.NewRouter()
 
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+
+	router.Use(cors.Handler(cors.Options{
+		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
+		AllowedOrigins: []string{"https://*", "http://localhost:5173"},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	}))
+
 	v1Router.Get("/healthcheck", handlerReadiness)
 	v1Router.Get("/err", handlerErr)
 
+	router.Handle("/static/*", http.StripPrefix("/static/", fs))
+
 	// handling launcher
-	v1Router.HandleFunc("/Launcher", launcherHandler)
+	v1Router.HandleFunc("/launcher", launcherHandler)
+	v1Router.HandleFunc("/quit", quitHandler)
 
 	v1Router.Post("/create_application", apiCfg.handleCreateApplication)
+	v1Router.Get("/get_application", apiCfg.handleGetAllApplication)
 
 	router.Mount("/api/v1", v1Router)
 
@@ -73,20 +90,6 @@ func main() {
 
 	log.Printf("Server is running %v", port)
 	error := srv.ListenAndServe()
-
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-
-	router.Use(cors.Handler(cors.Options{
-		// AllowedOrigins:   []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"https://*", "http://*"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: false,
-		MaxAge:           300, // Maximum value not ignored by any of major browsers
-	}))
 
 	if err != nil {
 		log.Fatal(error)
