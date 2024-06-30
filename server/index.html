@@ -1,16 +1,158 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html>
   <head>
     <title>Launcher</title>
   </head>
   <body>
     <h1>Launch Application</h1>
-    <form method="post" action="/Launcher">
-      <label for="application">Application:</label>
-      <input type="text" id="application" name="application" /><br /><br />
-      <label for="parameters">Parameters:</label>
-      <input type="text" id="parameters" name="parameters" /><br /><br />
+    <form method="post" action="/api/v1/launcher">
+      <label for="path">Application:</label>
+      <input type="text" id="path" name="path" /><br /><br />
+      <label for="url">Parameters:</label>
+      <input type="text" id="url" name="url" /><br /><br />
       <input type="submit" value="Launch" />
     </form>
+  </body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Application Launcher</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f0f4f8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+      .container {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+      }
+      h1 {
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 1.5rem;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+      }
+      label {
+        margin-bottom: 0.5rem;
+        color: #34495e;
+        font-weight: bold;
+      }
+      input[type="text"] {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+        border: 1px solid #bdc3c7;
+        border-radius: 4px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+      }
+      input[type="text"]:focus {
+        outline: none;
+        border-color: #3498db;
+      }
+      button {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        padding: 0.75rem;
+        font-size: 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+      button:hover {
+        background-color: #2980b9;
+      }
+      #message {
+        margin-top: 1rem;
+        text-align: center;
+        color: #27ae60;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Application Launcher</h1>
+      <form id="launcherForm">
+        <label for="name">Name:</label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          required
+          placeholder="Enter application name"
+        />
+
+        <label for="path">Path:</label>
+        <input
+          type="text"
+          id="path"
+          name="path"
+          required
+          placeholder="Enter application path"
+        />
+
+        <label for="url">Parameters (URL):</label>
+        <input
+          type="text"
+          id="url"
+          name="url"
+          placeholder="Enter parameters or URL (optional)"
+        />
+
+        <button type="submit">Launch Application</button>
+      </form>
+      <div id="message"></div>
+    </div>
+
+    <script>
+      document
+        .getElementById("launcherForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const formData = {
+            name: document.getElementById("name").value,
+            path: document.getElementById("path").value,
+            url: document.getElementById("url").value,
+          };
+
+          fetch("/api/v1/launcher", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          })
+            .then((response) => {
+              response.json();
+              document.getElementById("message").textContent =
+                "Application launched successfully!";
+              setTimeout(() => {
+                document.getElementById("message").textContent = "";
+              }, 10000);
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              document.getElementById("message").textContent =
+                "Error launching application.";
+              document.getElementById("message").style.color = "#e74c3c";
+            });
+        });
+    </script>
   </body>
 </html>

@@ -80,6 +80,11 @@ func main() {
 
 	v1Router.Post("/create_application", apiCfg.handleCreateApplication)
 	v1Router.Get("/get_application", apiCfg.handleGetAllApplication)
+	v1Router.Put("/update_application/{id}", apiCfg.handleUpdateApplication)
+	v1Router.Delete("/delete_application/{id}", apiCfg.handleDeleteApplication)
+
+	// File upload route
+	v1Router.Post("/upload", handleFileUpload)
 
 	router.Mount("/api/v1", v1Router)
 

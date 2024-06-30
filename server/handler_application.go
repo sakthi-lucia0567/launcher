@@ -3,11 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os/exec"
 	"sync"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	internal "github.com/sakthi-lucia0567/launcher/internal/database"
@@ -18,10 +20,10 @@ var runningApps = make(map[string]*exec.Cmd)
 
 func launcherHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		fmt.Println("hey html")
+		log.Println("hey html")
 		http.ServeFile(w, r, "index.html")
 	} else if r.Method == "POST" {
-
+		log.Println("matter")
 		type parameters struct {
 			Name        string `json:"name"`
 			Application string `json:"path"`
@@ -37,13 +39,14 @@ func launcherHandler(w http.ResponseWriter, r *http.Request) {
 			respondWithError(w, 400, fmt.Sprintf("Error parsing JSON: %v", err))
 			return
 		}
+		// log.Printf("Application launched: %s %s %s", params.Name, params.Application, params.Url)
+		// log.Println("urusai", params.Application)
 		launchApplication(params.Name, params.Application, params.Url)
-		fmt.Fprintf(w, "Application launched: %s %s %s", params.Name, params.Application, params.Url)
 	}
 }
 
 func launchApplication(name, application, parameters string) {
-	fmt.Printf("params %s %s %s", name, application, parameters)
+	log.Printf("params with %s %s %s", name, application, parameters)
 	cmd := exec.Command(application, parameters)
 	err := cmd.Start()
 	if err != nil {
@@ -139,4 +142,65 @@ func (apiConfig *apiConfig) handleGetAllApplication(w http.ResponseWriter, r *ht
 		return
 	}
 	respondWithJSON(w, 201, databaseApplicationToApplication(applications))
+}
+
+func (apiCfg *apiConfig) handleUpdateApplication(w http.ResponseWriter, r *http.Request) {
+
+	ID := chi.URLParam(r, "id")
+	log.Printf("ID %s", ID)
+	type parameters struct {
+		Path string `json:"path"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+
+	err := decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, 400, fmt.Sprintf("Error parsing JSON: %v", err))
+		return
+	}
+
+	applicationUUID, err := uuid.Parse(ID)
+	if err != nil {
+		respondWithError(w, 400, fmt.Sprintf("Invalid UUID format: %v", err))
+		return
+	}
+
+	updatedType := pgtype.UUID{Bytes: applicationUUID, Valid: true}
+
+	log.Printf("path %s", params.Path)
+
+	application, err := apiCfg.DB.UpdateApplication(r.Context(), internal.UpdateApplicationParams{
+		ID:        updatedType,
+		Path:      params.Path,
+		UpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+	})
+	if err != nil {
+		respondWithError(w, 400, fmt.Sprintf("Couldn't update Application: %v", err))
+		return
+	}
+
+	respondWithJSON(w, 200, application)
+}
+
+func (apiCfg *apiConfig) handleDeleteApplication(w http.ResponseWriter, r *http.Request) {
+
+	ID := chi.URLParam(r, "id")
+
+	applicationUUID, err := uuid.Parse(ID)
+	if err != nil {
+		respondWithError(w, 400, fmt.Sprintf("Invalid UUID format: %v", err))
+		return
+	}
+
+	applicationID := pgtype.UUID{Bytes: applicationUUID, Valid: true}
+
+	err = apiCfg.DB.DeleteApplication(r.Context(), applicationID)
+	if err != nil {
+		respondWithError(w, 400, fmt.Sprintf("Couldn't delete Application: %v", err))
+		return
+	}
+
+	respondWithJSON(w, 200, map[string]string{"message": "Application deleted"})
 }
