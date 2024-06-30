@@ -1,7 +1,7 @@
 // src/components/AppList.jsx
 import React, { useState, useEffect } from "react";
-import reactLogo from "../assets/react.svg";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 import { isMobile, isWindows } from "react-device-detect";
 
@@ -9,6 +9,8 @@ const AppList = () => {
   const [apps, setApps] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentApp, setCurrentApp] = useState(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchApps();
@@ -68,12 +70,12 @@ const AppList = () => {
           Application Opened: {currentApp.name}
         </h1>
         {isWindows && ( // Render settings button only if showSettings is true
-          <button
-            onClick={quitApp}
+          <a
+            onClick={() => navigate("/settings")}
             className="absolute bottom-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded"
           >
             Settings
-          </button>
+          </a>
         )}
         <button
           onClick={quitApp}
@@ -91,7 +93,7 @@ const AppList = () => {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {isWindows && ( // Render settings button only if showSettings is true
           <button
-            onClick={quitApp}
+            onClick={() => navigate("/settings")}
             className="absolute bottom-4 left-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded"
           >
             Settings
